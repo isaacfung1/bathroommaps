@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, timezone
 
 from geoalchemy2 import Geography
-from sqlalchemy import Boolean, DateTime, Float, Index, Integer, String
+from sqlalchemy import Boolean, DateTime, Float, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -47,10 +47,6 @@ class Bathroom(Base):
 
     # Relationship to cleanliness reports.
     reports = relationship("Report", back_populates="bathroom", lazy="selectin")
-
-    __table_args__ = (
-        Index("idx_bathrooms_location", location, postgresql_using="gist"),
-    )
 
     @property
     def capacity(self) -> int:

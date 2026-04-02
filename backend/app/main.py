@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from app.db.base import Base
 from app.db.session import engine
@@ -18,6 +19,10 @@ async def lifespan(app: FastAPI):
     """
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS idx_bathrooms_location "
+            "ON bathrooms USING gist (location)"
+        ))
     yield
 
 
