@@ -19,11 +19,3 @@ export function formatWalk(meters: number): string {
   const minutes = Math.max(1, Math.round(meters / 80));
   return minutes === 1 ? "1 min walk" : `${minutes} min walk`;
 }
-
-export function cleanlinessLabel(avg: number | null): string {
-  if (avg == null) return "No recent reports";
-  if (avg >= 4.2) return "Fresh";
-  if (avg >= 3.2) return "Okay";
-  if (avg >= 2.2) return "Rough";
-  return "Needs a clean";
-}

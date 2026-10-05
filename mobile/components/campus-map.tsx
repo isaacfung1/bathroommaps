@@ -3,10 +3,10 @@ import { StyleSheet, View } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 
 import { CAMPUS_ANCHOR } from "@/lib/campus";
-import type { LatLng, ScoredBathroom } from "@/lib/types";
+import type { LatLng, NearbyBathroom } from "@/lib/types";
 
 type CampusMapProps = {
-  bathrooms: ScoredBathroom[];
+  bathrooms: NearbyBathroom[];
   selectedId: string | null;
   recommendedId: string | null;
   userLocation: LatLng | null;

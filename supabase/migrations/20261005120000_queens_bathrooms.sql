@@ -2,6 +2,8 @@
 -- Safe to re-run. Does not alter any other tables in this database.
 -- Washroom coordinates are offsets from building centroids, not surveyed stalls.
 
+drop table if exists public.bathroom_reports;
+
 create table if not exists public.bathrooms (
     id uuid primary key,
     campus text not null default 'queens',
@@ -20,19 +22,9 @@ create table if not exists public.bathrooms (
     unique (campus, building, floor, gender)
 );
 
-create table if not exists public.bathroom_reports (
-    id uuid primary key default gen_random_uuid(),
-    bathroom_id uuid not null references public.bathrooms (id) on delete cascade,
-    cleanliness_rating double precision not null check (cleanliness_rating >= 1 and cleanliness_rating <= 5),
-    created_at timestamptz not null default now()
-);
-
 create index if not exists bathrooms_campus_idx on public.bathrooms (campus);
-create index if not exists bathroom_reports_bathroom_created_idx
-    on public.bathroom_reports (bathroom_id, created_at desc);
 
 alter table public.bathrooms enable row level security;
-alter table public.bathroom_reports enable row level security;
 
 drop policy if exists bathroom_maps_read_bathrooms on public.bathrooms;
 create policy bathroom_maps_read_bathrooms
@@ -41,18 +33,7 @@ create policy bathroom_maps_read_bathrooms
     to anon, authenticated
     using (true);
 
-drop policy if exists bathroom_maps_read_reports on public.bathroom_reports;
-create policy bathroom_maps_read_reports
-    on public.bathroom_reports
-    for select
-    to anon, authenticated
-    using (true);
-
 grant select on public.bathrooms to anon, authenticated;
-grant select on public.bathroom_reports to anon, authenticated;
-
-delete from public.bathroom_reports
-where bathroom_id in (select id from public.bathrooms where campus = 'queens');
 
 delete from public.bathrooms where campus = 'queens';
 
@@ -133,78 +114,3 @@ insert into public.bathrooms (
 ('27251c78-c98c-55a0-8947-a0f6e8aa4312'::uuid, 'queens', 'Richardson Hall 1F All-gender', 'all_gender', true, 'Richardson Hall', 1, 44.2269478, -76.4960600, 3, 0, 2, true),
 ('53586cd4-08a5-5c46-b72c-95d1a083fa4e'::uuid, 'queens', 'Richardson Hall 1F Women''s', 'women', false, 'Richardson Hall', 1, 44.2267681, -76.4958845, 6, 0, 4, true),
 ('8bd0d23d-d62e-5c92-bcc0-880648339435'::uuid, 'queens', 'Richardson Hall 1F Men''s', 'men', false, 'Richardson Hall', 1, 44.2267681, -76.4962355, 2, 3, 2, true);
-
-insert into public.bathroom_reports (bathroom_id, cleanliness_rating, created_at) values
-('d458c353-4d52-5ddc-98a1-9267287fd949'::uuid, 4.6, now()),
-('39ab7850-5efa-5965-ab92-a9e4818ced03'::uuid, 4.1, now()),
-('798cb61a-9ba3-549e-a23c-5918923367ab'::uuid, 2.1, now()),
-('d8dc5802-ffa0-5a8b-94ea-bc388152fbe5'::uuid, 4.4, now()),
-('464f4775-5004-54a9-833d-5c74931a30bb'::uuid, 3.8, now()),
-('9b0e4624-ccad-56b4-9ccb-d89e1517dad0'::uuid, 4.0, now()),
-('dc1d8e75-03c6-5844-85e3-0993bfd59c2b'::uuid, 3.5, now()),
-('8005bf29-8261-5f78-afea-9f2cacbe3fe6'::uuid, 2.3, now()),
-('95c6fb2c-8dc8-5b06-ba2d-c7bd28bc9b72'::uuid, 3.5, now()),
-('8d6ed293-0421-55d9-a526-6ed7e840af3d'::uuid, 3.7, now()),
-('13604b2b-65aa-52f4-ab4f-e1115cf71623'::uuid, 3.5, now()),
-('ffcc1ed6-b5c9-5ea8-bd35-fa35028e5d08'::uuid, 3.5, now()),
-('54ffb3ac-0b7a-5cbd-b4b1-002ae88274bd'::uuid, 3.5, now()),
-('3feb95d4-5c42-5d1b-addb-ea9b11201231'::uuid, 4.8, now()),
-('8f9c71f2-aa7f-5755-ad2e-df38ea990807'::uuid, 4.2, now()),
-('49d043d9-16ae-5eec-aabd-5c5987af1063'::uuid, 3.1, now()),
-('c60c2842-6d25-51f9-863b-270495da5b7a'::uuid, 3.5, now()),
-('61deede4-10dc-58e7-8312-ccafa5a558db'::uuid, 4.9, now()),
-('c91c3365-3dbd-5bcc-bc36-7ec3bd1ef1d9'::uuid, 4.5, now()),
-('8a8366b3-793a-52a5-aa54-2c84728d59eb'::uuid, 3.6, now()),
-('4bd2c385-3d3b-51b7-86dc-01f7747d8a0b'::uuid, 3.5, now()),
-('700a4200-8ce1-54b4-b467-ff1466085068'::uuid, 3.5, now()),
-('f11af25f-88db-5d10-9f2a-a6b1139a1fe8'::uuid, 3.5, now()),
-('11c24d4d-3553-5b5f-be66-ec92c6f8c23b'::uuid, 3.5, now()),
-('76677d1d-79f5-516e-8b68-56d617cbc108'::uuid, 3.5, now()),
-('ffa566e9-08ef-5fe7-bf8d-001bf7e5d1f2'::uuid, 3.9, now()),
-('223db1e2-dfc4-5da8-ac85-6aa6136e74b7'::uuid, 3.5, now()),
-('d7064840-9029-5588-a367-33d582c6d7e5'::uuid, 3.5, now()),
-('8c3d463f-fe71-5bfd-bf4b-3c646f9572eb'::uuid, 3.5, now()),
-('70df8902-e9c0-5be1-8eb6-c8a94e6cb5c6'::uuid, 2.8, now()),
-('4cd985af-5265-5fdb-871f-691cbcb147e5'::uuid, 3.5, now()),
-('2731ad84-a269-54d4-8391-87bf8307f032'::uuid, 3.5, now()),
-('481b55eb-f953-5d89-9caa-83633c277e20'::uuid, 3.5, now()),
-('28643464-abc9-5ba7-931c-c8998fe4ae91'::uuid, 3.5, now()),
-('6ab3468e-ea59-54ad-a236-6c3f9330f8fb'::uuid, 3.5, now()),
-('4a3d3f08-6deb-590d-a8b6-141ad961d172'::uuid, 3.5, now()),
-('7c7610f2-d800-526c-b61d-f25bf59f0dfe'::uuid, 3.5, now()),
-('28f546b9-5309-5be9-9df5-451c695764e0'::uuid, 3.5, now()),
-('2e111226-543d-5b9b-b204-368ddd556816'::uuid, 3.5, now()),
-('9622de21-4e5f-5399-be48-2f3b15db6274'::uuid, 3.5, now()),
-('c71685ff-3717-507d-809f-9f3293e18828'::uuid, 3.5, now()),
-('1e1dda12-552c-50ce-a2ee-94938bc2e88d'::uuid, 3.5, now()),
-('d51f82c2-dc70-5685-9407-3747309e79fd'::uuid, 3.5, now()),
-('5e24b110-6e07-515f-a239-a2710e9f3c46'::uuid, 4.3, now()),
-('bfae1d3f-cabb-57c5-860c-2f48b59dbfaf'::uuid, 3.5, now()),
-('a13cf25e-2a3d-523f-b406-5be70ed6a306'::uuid, 3.5, now()),
-('1c411f20-2ae4-5222-9141-7411c803bf22'::uuid, 3.5, now()),
-('52b241a5-6b4a-5f13-8891-877748901411'::uuid, 3.5, now()),
-('54373209-e280-56cd-89f0-87b16035622b'::uuid, 3.5, now()),
-('fa0313c9-3ca8-5ad4-88d1-3a5cda2efeac'::uuid, 3.5, now()),
-('95f70f6f-69f3-54ca-a9d0-6213ad4be730'::uuid, 3.5, now()),
-('62421488-66ca-5c50-a2ee-3f30668a7b64'::uuid, 3.5, now()),
-('476267f8-5f77-544a-9b77-384628a3f609'::uuid, 3.5, now()),
-('1b740c3a-16f0-5f01-a9af-03ec6fa4c8f3'::uuid, 3.5, now()),
-('e924c405-ded9-5128-bb94-c1a1c76d4186'::uuid, 3.5, now()),
-('5f43252d-b7f5-5539-8743-88648c77acea'::uuid, 3.5, now()),
-('7c1bb50b-c669-50b6-8a50-3ed5ef3778a4'::uuid, 3.5, now()),
-('ab82329e-07b5-5b18-a5da-3279cbe0a7f2'::uuid, 3.5, now()),
-('9b777148-1eb0-5124-b711-0dedb6c23973'::uuid, 3.5, now()),
-('3a924df9-25cc-51bd-9b22-240ac67541c9'::uuid, 3.5, now()),
-('5dc5240e-c4a6-533f-aa8e-e3a17ac80605'::uuid, 2.6, now()),
-('cf00ecfe-2db9-5695-8e6a-15bd4cf47abb'::uuid, 3.5, now()),
-('2ea319de-fcbd-5da6-af38-9b417cf56741'::uuid, 3.5, now()),
-('6be621e5-9705-593a-b1a9-928c189f5bd8'::uuid, 3.5, now()),
-('c18b7bf3-2f4a-55ff-967f-70fd82b1ae12'::uuid, 3.5, now()),
-('78d419ce-56b6-5018-940b-9b06f47717ea'::uuid, 3.5, now()),
-('831961d8-be38-50ee-b001-988ce3294d9f'::uuid, 3.5, now()),
-('94eabfd9-21d4-55ff-b7d7-38135fd297f1'::uuid, 3.5, now()),
-('f4b74d30-b261-53e7-9a51-d0d17c286c33'::uuid, 3.5, now()),
-('25a94a1e-3254-54ac-a96e-ea2914771995'::uuid, 3.5, now()),
-('27251c78-c98c-55a0-8947-a0f6e8aa4312'::uuid, 3.5, now()),
-('53586cd4-08a5-5c46-b72c-95d1a083fa4e'::uuid, 3.5, now()),
-('8bd0d23d-d62e-5c92-bcc0-880648339435'::uuid, 3.5, now());

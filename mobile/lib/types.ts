@@ -23,8 +23,6 @@ export type Bathroom = {
   is_approximate: boolean;
 };
 
-export type ScoredBathroom = Bathroom & {
-  avgCleanliness: number | null;
+export type NearbyBathroom = Bathroom & {
   distanceMeters: number;
-  score: number;
 };

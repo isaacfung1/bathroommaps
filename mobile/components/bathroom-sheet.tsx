@@ -1,27 +1,19 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
-import {
-  cleanlinessLabel,
-  floorLabel,
-  formatDistance,
-  formatWalk,
-  genderLabel,
-} from "@/lib/format";
-import type { GenderFilter, ScoredBathroom } from "@/lib/types";
+import { floorLabel, formatDistance, formatWalk, genderLabel } from "@/lib/format";
+import type { GenderFilter, NearbyBathroom } from "@/lib/types";
 
 type BathroomSheetProps = {
   status: "loading" | "ready" | "error";
   error?: string;
   originLabel: string;
-  floor: number;
-  onFloorChange: (floor: number) => void;
   gender: GenderFilter;
   onGenderChange: (gender: GenderFilter) => void;
   accessibleOnly: boolean;
   onAccessibleOnlyChange: (value: boolean) => void;
-  selected: ScoredBathroom | null;
+  selected: NearbyBathroom | null;
   recommendedId: string | null;
-  alternatives: ScoredBathroom[];
+  alternatives: NearbyBathroom[];
   onSelect: (id: string) => void;
   onRetry: () => void;
   wide: boolean;
@@ -38,8 +30,6 @@ export function BathroomSheet({
   status,
   error,
   originLabel,
-  floor,
-  onFloorChange,
   gender,
   onGenderChange,
   accessibleOnly,
@@ -58,26 +48,8 @@ export function BathroomSheet({
         keyboardShouldPersistTaps="handled"
         bounces={false}>
         <Text style={styles.kicker}>Queen&apos;s University</Text>
-        <Text style={styles.title}>Best washroom nearby</Text>
+        <Text style={styles.title}>Closest washroom</Text>
         <Text style={styles.origin}>From {originLabel}</Text>
-
-        <View style={styles.row}>
-          <View style={styles.stepper}>
-            <Pressable
-              accessibilityLabel="Lower floor"
-              onPress={() => onFloorChange(Math.max(1, floor - 1))}
-              style={styles.stepButton}>
-              <Text style={styles.stepButtonText}>−</Text>
-            </Pressable>
-            <Text style={styles.stepValue}>{floorLabel(floor)}</Text>
-            <Pressable
-              accessibilityLabel="Higher floor"
-              onPress={() => onFloorChange(Math.min(6, floor + 1))}
-              style={styles.stepButton}>
-              <Text style={styles.stepButtonText}>+</Text>
-            </Pressable>
-          </View>
-        </View>
 
         <View style={styles.filters}>
           {GENDERS.map((option) => (
@@ -117,12 +89,6 @@ export function BathroomSheet({
             <Text style={styles.distance}>
               {formatDistance(selected.distanceMeters)} · {formatWalk(selected.distanceMeters)}
             </Text>
-            <Text style={styles.clean}>
-              {cleanlinessLabel(selected.avgCleanliness)}
-              {selected.avgCleanliness != null
-                ? ` · ${selected.avgCleanliness.toFixed(1)} / 5`
-                : ""}
-            </Text>
             <Text style={styles.capacity}>
               {selected.num_stalls} stalls
               {selected.num_urinals > 0 ? ` · ${selected.num_urinals} urinals` : ""} ·{" "}
@@ -137,7 +103,7 @@ export function BathroomSheet({
                   if (recommendedId) onSelect(recommendedId);
                 }}
                 style={styles.linkButton}>
-                <Text style={styles.linkText}>Show best nearby</Text>
+                <Text style={styles.linkText}>Show closest</Text>
               </Pressable>
             ) : null}
           </View>
@@ -154,8 +120,7 @@ export function BathroomSheet({
                 <View style={styles.altCopy}>
                   <Text style={styles.altTitle}>{bathroom.building}</Text>
                   <Text style={styles.altMeta}>
-                    {floorLabel(bathroom.floor)} · {genderLabel(bathroom.gender)} ·{" "}
-                    {cleanlinessLabel(bathroom.avgCleanliness)}
+                    {floorLabel(bathroom.floor)} · {genderLabel(bathroom.gender)}
                   </Text>
                 </View>
                 <Text style={styles.altDistance}>{formatDistance(bathroom.distanceMeters)}</Text>
@@ -225,34 +190,6 @@ const styles = StyleSheet.create({
     color: "#5c6b7a",
     fontSize: 14,
   },
-  row: {
-    flexDirection: "row",
-    marginTop: 4,
-  },
-  stepper: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "#e4dccb",
-  },
-  stepButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  stepButtonText: {
-    color: "#10233f",
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  stepValue: {
-    color: "#10233f",
-    fontSize: 14,
-    fontWeight: "600",
-    minWidth: 64,
-    textAlign: "center",
-  },
   filters: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -296,10 +233,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     marginTop: 4,
-  },
-  clean: {
-    color: "#3d4d5c",
-    fontSize: 15,
   },
   capacity: {
     color: "#5c6b7a",

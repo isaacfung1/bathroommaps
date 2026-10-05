@@ -5,21 +5,19 @@ import * as Location from "expo-location";
 
 import { BathroomSheet } from "@/components/bathroom-sheet";
 import { CampusMap } from "@/components/campus-map";
-import { fetchQueensBathrooms, type BathroomRecord } from "@/lib/bathrooms";
+import { fetchQueensBathrooms } from "@/lib/bathrooms";
 import { CAMPUS_ANCHOR, isOnCampus } from "@/lib/campus";
 import { distanceMeters } from "@/lib/geo";
-import { scoreBathroom } from "@/lib/score";
-import type { GenderFilter, LatLng, ScoredBathroom } from "@/lib/types";
+import type { Bathroom, GenderFilter, LatLng, NearbyBathroom } from "@/lib/types";
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const wide = width >= 960;
 
-  const [floor, setFloor] = useState(1);
   const [gender, setGender] = useState<GenderFilter>("any");
   const [accessibleOnly, setAccessibleOnly] = useState(false);
-  const [rows, setRows] = useState<BathroomRecord[]>([]);
+  const [rows, setRows] = useState<Bathroom[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState<string>();
   const [userLocation, setUserLocation] = useState<LatLng | null>(null);
@@ -79,37 +77,26 @@ export default function HomeScreen() {
   const origin = userLocation ?? CAMPUS_ANCHOR;
   const originLabel = userLocation ? "where you are" : CAMPUS_ANCHOR.label;
 
-  const scored = useMemo(() => {
+  const nearby = useMemo(() => {
     return rows
       .filter((bathroom) => gender === "any" || bathroom.gender === gender)
       .filter((bathroom) => !accessibleOnly || bathroom.is_accessible)
-      .map((bathroom): ScoredBathroom => {
-        const meters = distanceMeters(origin, bathroom);
-        const capacity = bathroom.num_stalls + bathroom.num_urinals;
-        return {
-          ...bathroom,
-          distanceMeters: meters,
-          score: scoreBathroom({
-            distanceMeters: meters,
-            avgCleanliness: bathroom.avgCleanliness,
-            capacity,
-            userFloor: floor,
-            bathroomFloor: bathroom.floor,
-          }),
-        };
-      })
-      .sort((a, b) => a.score - b.score || a.distanceMeters - b.distanceMeters);
-  }, [rows, origin, gender, accessibleOnly, floor]);
+      .map((bathroom): NearbyBathroom => ({
+        ...bathroom,
+        distanceMeters: distanceMeters(origin, bathroom),
+      }))
+      .sort((a, b) => a.distanceMeters - b.distanceMeters);
+  }, [rows, origin, gender, accessibleOnly]);
 
-  const recommended = scored[0] ?? null;
-  const selected = scored.find((bathroom) => bathroom.id === selectedId) ?? recommended;
+  const recommended = nearby[0] ?? null;
+  const selected = nearby.find((bathroom) => bathroom.id === selectedId) ?? recommended;
   const recommendedId = recommended?.id ?? null;
 
   useEffect(() => {
     if (recommendedId) setSelectedId(recommendedId);
   }, [recommendedId]);
 
-  const alternatives = scored.filter((bathroom) => bathroom.id !== selected?.id).slice(0, 4);
+  const alternatives = nearby.filter((bathroom) => bathroom.id !== selected?.id).slice(0, 4);
 
   return (
     <View
@@ -121,7 +108,7 @@ export default function HomeScreen() {
       ]}>
       <View style={styles.mapPane}>
         <CampusMap
-          bathrooms={scored}
+          bathrooms={nearby}
           selectedId={selected?.id ?? null}
           recommendedId={recommended?.id ?? null}
           userLocation={userLocation}
@@ -137,8 +124,6 @@ export default function HomeScreen() {
         status={status}
         error={error}
         originLabel={originLabel}
-        floor={floor}
-        onFloorChange={setFloor}
         gender={gender}
         onGenderChange={setGender}
         accessibleOnly={accessibleOnly}

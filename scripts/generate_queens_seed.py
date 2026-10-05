@@ -45,28 +45,6 @@ FLOOR_ONE = [
     ("men", False, -8, -14, 2, 3, 2),
 ]
 
-RATINGS = {
-    ("Stauffer Library", 1, "men"): 2.1,
-    ("Stauffer Library", 1, "women"): 4.1,
-    ("Stauffer Library", 1, "all_gender"): 4.6,
-    ("Stauffer Library", 2, "all_gender"): 4.4,
-    ("Stauffer Library", 3, "all_gender"): 3.8,
-    ("John Deutsch University Centre", 1, "all_gender"): 4.8,
-    ("John Deutsch University Centre", 1, "men"): 3.1,
-    ("John Deutsch University Centre", 1, "women"): 4.2,
-    ("Douglas Library", 1, "men"): 2.3,
-    ("Douglas Library", 1, "all_gender"): 4.0,
-    ("Queen's Centre", 1, "all_gender"): 4.9,
-    ("Queen's Centre", 1, "women"): 4.5,
-    ("Queen's Centre", 1, "men"): 3.6,
-    ("Mackintosh-Corry Hall", 1, "all_gender"): 3.7,
-    ("Chernoff Hall", 1, "women"): 4.3,
-    ("Botterell Hall", 1, "men"): 2.6,
-    ("Stirling Hall", 1, "men"): 2.8,
-    ("Ellis Hall", 1, "women"): 3.9,
-}
-
-
 def shift(lat: float, lon: float, north_m: float, east_m: float) -> tuple[float, float]:
     lat2 = lat + north_m / 111_320
     lon2 = lon + east_m / (111_320 * math.cos(math.radians(lat)))
@@ -87,7 +65,6 @@ def gender_name(gender: str) -> str:
 
 def main() -> None:
     bathroom_rows: list[str] = []
-    report_rows: list[str] = []
 
     for building, lat, lon, floors in BUILDINGS:
         for floor in floors:
@@ -106,14 +83,12 @@ def main() -> None:
                     f"{sql_str(building)}, {floor}, {pin_lat:.7f}, {pin_lon:.7f}, "
                     f"{stalls}, {urinals}, {sinks}, true)"
                 )
-                rating = RATINGS.get((building, floor, gender), 3.5)
-                report_rows.append(
-                    f"({sql_str(str(bathroom_id))}::uuid, {rating:.1f}, now())"
-                )
 
     sql = f"""-- Bathroom Maps tables for Queen's University at Kingston.
 -- Safe to re-run. Does not alter any other tables in this database.
 -- Washroom coordinates are offsets from building centroids, not surveyed stalls.
+
+drop table if exists public.bathroom_reports;
 
 create table if not exists public.bathrooms (
     id uuid primary key,
@@ -133,19 +108,9 @@ create table if not exists public.bathrooms (
     unique (campus, building, floor, gender)
 );
 
-create table if not exists public.bathroom_reports (
-    id uuid primary key default gen_random_uuid(),
-    bathroom_id uuid not null references public.bathrooms (id) on delete cascade,
-    cleanliness_rating double precision not null check (cleanliness_rating >= 1 and cleanliness_rating <= 5),
-    created_at timestamptz not null default now()
-);
-
 create index if not exists bathrooms_campus_idx on public.bathrooms (campus);
-create index if not exists bathroom_reports_bathroom_created_idx
-    on public.bathroom_reports (bathroom_id, created_at desc);
 
 alter table public.bathrooms enable row level security;
-alter table public.bathroom_reports enable row level security;
 
 drop policy if exists bathroom_maps_read_bathrooms on public.bathrooms;
 create policy bathroom_maps_read_bathrooms
@@ -154,18 +119,7 @@ create policy bathroom_maps_read_bathrooms
     to anon, authenticated
     using (true);
 
-drop policy if exists bathroom_maps_read_reports on public.bathroom_reports;
-create policy bathroom_maps_read_reports
-    on public.bathroom_reports
-    for select
-    to anon, authenticated
-    using (true);
-
 grant select on public.bathrooms to anon, authenticated;
-grant select on public.bathroom_reports to anon, authenticated;
-
-delete from public.bathroom_reports
-where bathroom_id in (select id from public.bathrooms where campus = 'queens');
 
 delete from public.bathrooms where campus = 'queens';
 
@@ -174,9 +128,6 @@ insert into public.bathrooms (
     latitude, longitude, num_stalls, num_urinals, num_sinks, is_approximate
 ) values
 {",\n".join(bathroom_rows)};
-
-insert into public.bathroom_reports (bathroom_id, cleanliness_rating, created_at) values
-{",\n".join(report_rows)};
 """
 
     out = Path(__file__).resolve().parents[1] / "supabase" / "migrations" / "20261005120000_queens_bathrooms.sql"

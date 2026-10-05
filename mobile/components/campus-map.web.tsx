@@ -2,14 +2,14 @@ import { createElement, useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { CAMPUS_ANCHOR } from "@/lib/campus";
-import type { LatLng, ScoredBathroom } from "@/lib/types";
+import type { LatLng, NearbyBathroom } from "@/lib/types";
 
 const MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
 const MAPLIBRE_JS = "https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.js";
 const MAPLIBRE_CSS = "https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.css";
 
 type CampusMapProps = {
-  bathrooms: ScoredBathroom[];
+  bathrooms: NearbyBathroom[];
   selectedId: string | null;
   recommendedId: string | null;
   userLocation: LatLng | null;
@@ -78,7 +78,7 @@ function loadMapLibre(): Promise<MapLibreNamespace> {
   });
 }
 
-function pinElement(bathroom: ScoredBathroom, selected: boolean, recommended: boolean) {
+function pinElement(bathroom: NearbyBathroom, selected: boolean, recommended: boolean) {
   const button = document.createElement("button");
   button.type = "button";
   button.setAttribute("aria-label", bathroom.name);
