@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 import { StyleSheet, View } from "react-native";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker, type Region } from "react-native-maps";
 
-import { CAMPUS_ANCHOR } from "@/lib/campus";
+import { CAMPUS_ANCHOR, CAMPUS_BOUNDS, MIN_ZOOM } from "@/lib/campus";
 import type { LatLng, NearbyBathroom } from "@/lib/types";
 
 type CampusMapProps = {
@@ -36,6 +36,14 @@ export function CampusMap({
     );
   }, [selectedId, bathrooms]);
 
+  function keepOnCampus(region: Region) {
+    const latitude = Math.min(Math.max(region.latitude, CAMPUS_BOUNDS.south), CAMPUS_BOUNDS.north);
+    const longitude = Math.min(Math.max(region.longitude, CAMPUS_BOUNDS.west), CAMPUS_BOUNDS.east);
+    if (latitude !== region.latitude || longitude !== region.longitude) {
+      mapRef.current?.animateToRegion({ ...region, latitude, longitude }, 250);
+    }
+  }
+
   return (
     <View style={styles.fill}>
       <MapView
@@ -47,6 +55,8 @@ export function CampusMap({
           latitudeDelta: 0.012,
           longitudeDelta: 0.012,
         }}
+        minZoomLevel={MIN_ZOOM}
+        onRegionChangeComplete={keepOnCampus}
         showsUserLocation={userLocation != null}
       >
         {bathrooms.map((bathroom) => {

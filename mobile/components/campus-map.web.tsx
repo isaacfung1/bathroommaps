@@ -1,7 +1,7 @@
 import { createElement, useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
-import { CAMPUS_ANCHOR } from "@/lib/campus";
+import { CAMPUS_ANCHOR, CAMPUS_BOUNDS, MIN_ZOOM } from "@/lib/campus";
 import type { LatLng, NearbyBathroom } from "@/lib/types";
 
 const MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
@@ -32,6 +32,8 @@ type MapLibreNamespace = {
     style: string;
     center: [number, number];
     zoom: number;
+    minZoom: number;
+    maxBounds: [[number, number], [number, number]];
   }) => MapLibreMap;
   Marker: new (options: { element: HTMLElement; anchor: string }) => {
     setLngLat: (lngLat: [number, number]) => { addTo: (map: MapLibreMap) => MapLibreMarker };
@@ -150,6 +152,11 @@ export function CampusMap({
           style: MAP_STYLE,
           center: [CAMPUS_ANCHOR.longitude, CAMPUS_ANCHOR.latitude],
           zoom: 15.6,
+          minZoom: MIN_ZOOM,
+          maxBounds: [
+            [CAMPUS_BOUNDS.west, CAMPUS_BOUNDS.south],
+            [CAMPUS_BOUNDS.east, CAMPUS_BOUNDS.north],
+          ],
         });
         map.addControl(new maplibregl.NavigationControl(), "bottom-right");
         mapRef.current = map;

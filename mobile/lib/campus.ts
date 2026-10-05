@@ -13,6 +13,16 @@ export const CAMPUS_ANCHOR: LatLng & { label: string } = {
   label: "the front of Stauffer Library",
 };
 
+/** The map cannot pan outside this box, which covers the on-campus radius. */
+export const CAMPUS_BOUNDS = {
+  south: 44.212,
+  west: -76.516,
+  north: 44.241,
+  east: -76.474,
+};
+
+export const MIN_ZOOM = 14.5;
+
 export function isOnCampus(point: LatLng): boolean {
   return distanceMeters(point, QUEENS_CENTER) < 1_500;
 }
