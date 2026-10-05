@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "bathroommaps",
+    "name": "Bathroom Maps",
     "slug": "bathroommaps",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -27,6 +27,12 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Bathroom Maps uses your location to find the nearest washroom on campus."
+        }
+      ],
       [
         "expo-splash-screen",
         {
